@@ -1,8 +1,8 @@
 # Model Matchmaker
 
-**Stop paying Opus prices to rename files.**
+**Stop paying Opus prices to rename files. Stop waiting 20 seconds for responses that should take 3.**
 
-A local hook for [Cursor](https://cursor.com) and [Claude Code](https://docs.anthropic.com/en/docs/claude-code) that classifies every prompt before it's sent and tells you which model to use. No proxy, no API calls, no dependencies. Three files, two minutes to set up.
+A local hook for [Cursor](https://cursor.com) and [Claude Code](https://docs.anthropic.com/en/docs/claude-code) that classifies every prompt before it's sent and recommends the right model. Saves money (cloud APIs), speeds up your workflow (everyone), reduces resource usage (local models). No proxy, no API calls, no dependencies. Three files, two minutes to set up.
 
 ## What It Does
 
@@ -89,7 +89,9 @@ Prefix any prompt with `!` to bypass the advisor entirely:
 
 The hook returns immediately with no classification.
 
-## Why Not Just Use Cursor's Auto Mode?
+## How This Compares to Other Solutions
+
+### Cursor's Auto Mode
 
 Cursor's Auto mode runs server-side and picks from a curated shortlist (GPT-4.1, Claude 4 Sonnet, Gemini 2.5 Pro). A few limitations:
 
@@ -98,7 +100,25 @@ Cursor's Auto mode runs server-side and picks from a curated shortlist (GPT-4.1,
 - Independent testing shows it mostly routes to Sonnet regardless of task complexity
 - It optimizes for Cursor's infrastructure costs, not necessarily your output quality
 
-Model Matchmaker doesn't replace Auto mode. It's a complementary local layer that works on top of whatever model you've selected, nudging you in both directions: down when you're overpaying, up when you're underpowered.
+Model Matchmaker is a complementary local layer that works on top of whatever model you've selected, nudging you in both directions: down when you're overpaying, up when you're underpowered.
+
+### OpenRouter's /auto Endpoint
+
+OpenRouter's `/auto` is server-side routing between models they host. Key difference:
+
+**OpenRouter/auto:**
+- Runs on their servers (after your request is sent)
+- Routes between models they host
+- You still pay per token (just optimized pricing)
+- Only works with OpenRouter
+
+**Model Matchmaker:**
+- Runs on your machine (before the request is sent)
+- Blocks unnecessary requests entirely (no API call = no cost)
+- Works with any provider (Claude, OpenRouter, local models, etc.)
+- Saves time AND money (smaller models respond 3-5x faster)
+
+Think of it as two layers: Model Matchmaker prevents unnecessary requests client-side, OpenRouter/auto optimizes server-side routing. You could even use both together.
 
 ## Why Not a Proxy?
 
@@ -123,13 +143,27 @@ Model Matchmaker runs entirely locally. No network calls, no proxy, no attack su
 
 I ran a retroactive analysis on several weeks of prompts from building two products ([DoMoreWorld](https://domoreworld.com) and [Art Ping Pong](https://artpingpong.com)). I was using Opus for almost everything.
 
+### Cost Savings (Cloud API Users)
 - **60-70% of prompts** were standard implementation work (building pages, writing components, debugging) that Sonnet handles identically at ~75% less cost
 - **Git commits, file renames, route additions, menu reordering** were all on Opus when Haiku handles them at ~90% less cost
 - **Architecture decisions and deep analysis** correctly stayed on Opus
-- **12/12 test prompts** from real sessions classified correctly after tuning
 - **Estimated savings: 50-70%** of total AI spend with zero quality loss
 
-The log file has been the most interesting part. Reviewing it reveals patterns you don't expect; most "build" prompts genuinely don't need Opus.
+### Speed Improvements (Everyone)
+- **Haiku responds 3-5x faster than Opus** - routing 60% of requests to Haiku/Sonnet means your workflow feels noticeably more responsive
+- **No more waiting 15-20 seconds** for Opus to process "git commit -m 'fix typo'"
+- **Staying in flow** - when simple tasks return in 3-5 seconds instead of 15-20, you maintain momentum
+
+### Resource Efficiency (Local Model Users)
+While this tool is configured for Claude models out-of-the-box, the routing logic applies to local models too:
+- **VRAM savings**: Don't load Llama 70B (40GB) for tasks that work fine on Llama 8B (5GB)
+- **Inference speed**: Smaller models respond faster (2 seconds vs. 10 seconds)
+- **Power/heat**: Lighter models = lower electricity bills, less fan noise
+- **Adaptable**: Since it's open source, you can easily swap model names in the config for your local stack (Ollama, LM Studio, etc.)
+
+### Accuracy
+- **12/12 test prompts** from real sessions classified correctly after tuning
+- The log file has been the most interesting part - reviewing it reveals patterns you don't expect; most "build" prompts genuinely don't need Opus
 
 ## Contributing
 
