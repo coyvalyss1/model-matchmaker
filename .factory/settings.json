@@ -1,0 +1,50 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$FACTORY_PROJECT_DIR/.factory/hooks/session-init.sh",
+            "timeout": 2
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$FACTORY_PROJECT_DIR/.factory/hooks/model-advisor.sh",
+            "timeout": 2
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "tool_name": "Execute",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$FACTORY_PROJECT_DIR/.factory/hooks/command-validator.sh",
+            "timeout": 2
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "tool_name": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$FACTORY_PROJECT_DIR/.factory/hooks/usage-tracker.sh",
+            "timeout": 1
+          }
+        ]
+      }
+    ]
+  }
+}

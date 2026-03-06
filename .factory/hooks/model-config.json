@@ -1,0 +1,20 @@
+{
+  "modelMapping": {
+    "haiku": {
+      "displayName": "wududu-kiro-claude-haiku-4.5",
+      "description": "wududu-kiro-claude-haiku-4.5",
+      "patterns": ["haiku"]
+    },
+    "sonnet": {
+      "displayName": "wududu-kiro-claude-sonnet-4-5",
+      "description": "Claude Sonnet 4.5 - 中等模型，适合标准开发任务",
+      "patterns": ["sonnet"]
+    },
+    "opus": {
+      "displayName": "wududu-kiro-claude-opus-4-6",
+      "description": "Claude Opus 4.6 - 重量级模型，适合架构和深度分析",
+      "patterns": ["opus"]
+    }
+  },
+  "note": "修改此文件可自定义模型映射。patterns 用于从 displayName 中识别模型级别。"
+}
