@@ -1,8 +1,39 @@
 # Model Matchmaker - Cursor AI Rules
 
+## Shared Rules (ALWAYS apply these)
+
+This project is independent but follows Valyss ecosystem standards. Apply ALL rules from:
+- `~/.cursorrules` (global: git safety, secrets, documentation, writing voice, public content security)
+- `~/.cursor/rules/git-workflow.mdc` (commit workflow)
+- `~/.cursor/rules/public-content-security.mdc` (sanitization for open-source/shared content)
+
+---
+
 ## Project Overview
 
 Model Matchmaker is a local Cursor hook that classifies prompts before sending and recommends the right Claude model. Three files: `model-advisor.sh`, session-init/track-completion hooks.
+
+---
+
+## Repository Content Rules
+
+**This repo contains ONLY code and technical documentation.**
+
+### What Goes in This Repo
+- Hook scripts (`.sh` files)
+- Configuration files (`hooks.json`)
+- Technical docs (README.md, AUTO_SWITCH_SETUP.md, troubleshooting)
+- Code comments and API documentation
+- Test harnesses and examples
+
+### What Does NOT Go Here
+- **Marketing content** (release posts, social media copies, promotion materials)
+- **Business planning** (strategy docs, roadmap justifications, partnerships)
+- **Personal drafts** (pre-write content, brainstorms, unfinished ideas)
+
+**All marketing/business content goes to:** `/Users/coybyron/Business Planning/model-matchmaker-release/`
+
+This ensures the repo stays technical and doesn't accidentally expose business decisions to the public.
 
 ## Git Workflow
 
