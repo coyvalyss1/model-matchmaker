@@ -8,19 +8,19 @@ FLAG_FILE="$HOME/.cursor/hooks/.auto-switch-enabled"
 case "$ACTION" in
     on|enable)
         touch "$FLAG_FILE"
-        echo "✓ Auto-switch enabled"
+        echo "[OK] Auto-switch enabled"
         echo "  Model Matchmaker will now automatically switch models when blocked."
         echo "  To disable: ./toggle-auto-switch.sh off"
         ;;
     off|disable)
         rm -f "$FLAG_FILE"
-        echo "✓ Auto-switch disabled"
+        echo "[OK] Auto-switch disabled"
         echo "  Model Matchmaker will block with a message (original behavior)."
         echo "  To enable: ./toggle-auto-switch.sh on"
         ;;
     status)
         if [ -f "$FLAG_FILE" ]; then
-            echo "Auto-switch: ENABLED ✓"
+            echo "Auto-switch: ENABLED [OK]"
             echo "  Models will switch automatically when recommended."
         else
             echo "Auto-switch: DISABLED"
@@ -33,7 +33,7 @@ case "$ACTION" in
         
         # Check kill switch
         if [ -f "$HOME/.cursor/hooks/.auto-switch-kill" ]; then
-            echo "  🛑 KILL SWITCH ACTIVE - auto-switch is hard-disabled"
+            echo "  [STOP] KILL SWITCH ACTIVE - auto-switch is hard-disabled"
         fi
         
         # Check audit log
@@ -42,7 +42,7 @@ case "$ACTION" in
             FAILED_COUNT=$(grep "FAILED" "$HOME/.cursor/hooks/auto-switch-audit.log" 2>/dev/null | tail -20 | wc -l | tr -d ' ')
             echo "  Recent switches (last 20): $RECENT_COUNT"
             if [ "$FAILED_COUNT" -gt 0 ]; then
-                echo "  ⚠️  Failed attempts: $FAILED_COUNT"
+                echo "  [WARN] Failed attempts: $FAILED_COUNT"
             fi
         else
             echo "  No audit log yet"
@@ -50,7 +50,7 @@ case "$ACTION" in
         
         # Check for stale locks
         if [ -f "$HOME/.cursor/hooks/.auto-switch.lock" ]; then
-            echo "  ⚠️  Stale lock file detected (may indicate issue)"
+            echo "  [WARN] Stale lock file detected (may indicate issue)"
         fi
         
         echo ""
