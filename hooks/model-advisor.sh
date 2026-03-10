@@ -143,6 +143,21 @@ def detect_model_info(model_name):
                 if best is None or len(key) < best_len:
                     best = (key, p)
                     best_len = len(key)
+            elif ("o3" in m or m == "o3") and "o3" in key and "codex" not in key:
+                best = (key, p)
+                break
+            elif "5.4" in m and "5.4" in key:
+                best = (key, p)
+                break
+            elif "5.3-codex" in m and "5.3-codex" in key:
+                best = (key, p)
+                break
+            elif "5.1-codex" in m and "5.1-codex" in key:
+                best = (key, p)
+                break
+            elif "5-nano" in m and "5-nano" in key:
+                best = (key, p)
+                break
             elif "gpt-4.1-nano" in m and "gpt-4.1-nano" in key:
                 best = (key, p)
                 break
@@ -169,13 +184,24 @@ def detect_model_info(model_name):
             "output_cost": p.get("output_cost_per_token", 0),
         }
 
-    # Absolute fallback: detect family from name alone
+    # Absolute fallback: detect family from name alone - prioritize newest versions
     if "opus" in m:
+        # Prioritize 4.6, fallback to 4.5 pricing
         return {"key": m, "provider": "anthropic", "tier": 3, "input_cost": 0.000005, "output_cost": 0.000025}
     if "sonnet" in m:
         return {"key": m, "provider": "anthropic", "tier": 2, "input_cost": 0.000003, "output_cost": 0.000015}
     if "haiku" in m:
         return {"key": m, "provider": "anthropic", "tier": 1, "input_cost": 0.000001, "output_cost": 0.000005}
+    if "o3" in m and not "codex" in m:
+        return {"key": m, "provider": "openai", "tier": 3, "input_cost": 0.000002, "output_cost": 0.000008}
+    if "5.4" in m:
+        return {"key": m, "provider": "openai", "tier": 3, "input_cost": 0.0000025, "output_cost": 0.000015}
+    if "5.3-codex" in m or "gpt-5.3-codex" in m:
+        return {"key": m, "provider": "openai", "tier": 3, "input_cost": 0.00000175, "output_cost": 0.000014}
+    if "5.1-codex" in m or "gpt-5.1-codex" in m:
+        return {"key": m, "provider": "openai", "tier": 3, "input_cost": 0.00000125, "output_cost": 0.00001}
+    if "5-nano" in m or "gpt-5-nano" in m:
+        return {"key": m, "provider": "openai", "tier": 1, "input_cost": 0.00000005, "output_cost": 0.0000004}
     if "gpt-4.1-nano" in m:
         return {"key": m, "provider": "openai", "tier": 1, "input_cost": 0.0000001, "output_cost": 0.0000004}
     if "gpt-4.1-mini" in m:

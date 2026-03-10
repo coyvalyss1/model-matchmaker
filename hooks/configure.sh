@@ -142,17 +142,21 @@ if [ "$PROVIDER" = "claude" ]; then
     echo "    - claude-sonnet-4-6 (Tier 2)"
     echo "    - claude-haiku-4-5  (Tier 1)"
 elif [ "$PROVIDER" = "openai" ]; then
-    ALLOWED='["gpt-4.1", "gpt-4o", "gpt-4.1-mini", "gpt-4.1-nano"]'
+    ALLOWED='["o3", "gpt-5.4", "gpt-5.3-codex", "gpt-5.1-codex", "gpt-4.1", "gpt-4o", "gpt-5-nano", "gpt-4.1-mini"]'
     echo "  OpenAI models enabled:"
-    echo "    - gpt-4.1      (Tier 3)"
-    echo "    - gpt-4o       (Tier 2)"
-    echo "    - gpt-4.1-mini (Tier 1)"
-    echo "    - gpt-4.1-nano (Tier 1)"
+    echo "    - o3             (Tier 3)"
+    echo "    - gpt-5.4        (Tier 3)"
+    echo "    - gpt-5.3-codex  (Tier 3)"
+    echo "    - gpt-5.1-codex  (Tier 3)"
+    echo "    - gpt-4.1        (Tier 3)"
+    echo "    - gpt-4o         (Tier 2)"
+    echo "    - gpt-5-nano     (Tier 1)"
+    echo "    - gpt-4.1-mini   (Tier 1)"
 else
-    ALLOWED='["claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5", "gpt-4.1", "gpt-4o", "gpt-4.1-mini", "gpt-4.1-nano"]'
+    ALLOWED='["claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5", "o3", "gpt-5.4", "gpt-5.3-codex", "gpt-5.1-codex", "gpt-4.1", "gpt-4o", "gpt-5-nano", "gpt-4.1-mini"]'
     echo "  Hybrid -- all models enabled:"
     echo "    Claude: opus-4-6, sonnet-4-6, haiku-4-5"
-    echo "    OpenAI: gpt-4.1, gpt-4o, gpt-4.1-mini, gpt-4.1-nano"
+    echo "    OpenAI: o3, gpt-5.4, gpt-5.3-codex, gpt-5.1-codex, gpt-4.1, gpt-4o, gpt-5-nano, gpt-4.1-mini"
 fi
 echo ""
 

@@ -40,26 +40,54 @@ fallback = {
     "last_updated": datetime.now().isoformat(),
     "source": "hardcoded_fallback",
     "models": {
-        "claude-opus-4-0": {
+        "claude-opus-4-6": {
             "input_cost_per_token": 0.000005,
             "output_cost_per_token": 0.000025,
             "quality_tier": 3,
             "provider": "anthropic",
-            "display_name": "Opus"
+            "display_name": "Opus 4.6"
         },
-        "claude-sonnet-4-0": {
+        "claude-sonnet-4-6": {
             "input_cost_per_token": 0.000003,
             "output_cost_per_token": 0.000015,
             "quality_tier": 2,
             "provider": "anthropic",
-            "display_name": "Sonnet"
+            "display_name": "Sonnet 4.6"
         },
-        "claude-haiku-4-0": {
+        "claude-haiku-4-5": {
             "input_cost_per_token": 0.000001,
             "output_cost_per_token": 0.000005,
             "quality_tier": 1,
             "provider": "anthropic",
-            "display_name": "Haiku"
+            "display_name": "Haiku 4.5"
+        },
+        "o3": {
+            "input_cost_per_token": 0.000002,
+            "output_cost_per_token": 0.000008,
+            "quality_tier": 3,
+            "provider": "openai",
+            "display_name": "o3"
+        },
+        "gpt-5.4": {
+            "input_cost_per_token": 0.0000025,
+            "output_cost_per_token": 0.000015,
+            "quality_tier": 3,
+            "provider": "openai",
+            "display_name": "GPT-5.4"
+        },
+        "gpt-5.3-codex": {
+            "input_cost_per_token": 0.00000175,
+            "output_cost_per_token": 0.000014,
+            "quality_tier": 3,
+            "provider": "openai",
+            "display_name": "GPT-5.3-Codex"
+        },
+        "gpt-5.1-codex": {
+            "input_cost_per_token": 0.00000125,
+            "output_cost_per_token": 0.00001,
+            "quality_tier": 3,
+            "provider": "openai",
+            "display_name": "GPT-5.1-Codex"
         },
         "gpt-4.1": {
             "input_cost_per_token": 0.000002,
@@ -81,6 +109,13 @@ fallback = {
             "quality_tier": 1,
             "provider": "openai",
             "display_name": "GPT-4.1-mini"
+        },
+        "gpt-5-nano": {
+            "input_cost_per_token": 0.00000005,
+            "output_cost_per_token": 0.0000004,
+            "quality_tier": 1,
+            "provider": "openai",
+            "display_name": "GPT-5-nano"
         },
         "gpt-4.1-nano": {
             "input_cost_per_token": 0.0000001,
@@ -113,15 +148,22 @@ except Exception:
 TARGETS = {
     "anthropic": {
         "patterns": [
-            (r"claude.*opus", 3),
-            (r"claude.*sonnet", 2),
-            (r"claude.*haiku", 1),
+            (r"claude.*opus.*4[.-]6", 3),
+            (r"claude.*opus.*4[.-]5", 3),
+            (r"claude.*sonnet.*4[.-]6", 2),
+            (r"claude.*sonnet.*4[.-]5", 2),
+            (r"claude.*haiku.*4[.-]5", 1),
         ]
     },
     "openai": {
         "patterns": [
+            (r"^o3$", 3),
+            (r"^gpt-5\.4", 3),
+            (r"^gpt-5\.3-codex$", 3),
+            (r"^gpt-5\.1-codex$", 3),
             (r"^gpt-4\.1$", 3),
             (r"^gpt-4o$", 2),
+            (r"^gpt-5-nano$", 1),
             (r"^gpt-4\.1-mini$", 1),
             (r"^gpt-4\.1-nano$", 1),
             (r"^gpt-4o-mini$", 1),
