@@ -77,45 +77,19 @@ if [ -f "$MODE_FILE" ]; then
     CURSOR_MODE=$(cat "$MODE_FILE" 2>/dev/null || echo "agent")
 fi
 
+# Window targeting from environment (set by model-advisor.sh)
+WINDOW_TITLE="${WINDOW_TITLE:-}"
+CONVERSATION_ID="${CONVERSATION_ID:-}"
+
 # Audit log
-echo "[$(date -Iseconds)] SWITCH_ATTEMPT | Model: $MODEL | Mode: $CURSOR_MODE | PID: $$ | User: $(whoami)" >> "$LOG_FILE"
+echo "[$(date -Iseconds)] SWITCH_ATTEMPT | Model: $MODEL | Mode: $CURSOR_MODE | Window: $WINDOW_TITLE | PID: $$ | User: $(whoami)" >> "$LOG_FILE"
 
-# Model dropdown positions
-# Agent/Debug/Ask modes: Auto=0, MAX=1, Composer=2, GPT=3, Opus=4, Haiku=5, Sonnet=6
-# Plan mode: Auto=0, MAX=1, Composer=2, GPT=3, Opus=4, [Haiku grayed/skipped], Sonnet=5
-#
-# In Plan mode, Haiku is grayed out and arrow-down skips it, so all models after it
-# shift up by one position.
-
-if [ "$CURSOR_MODE" = "plan" ]; then
-    # Plan mode: Haiku is grayed out and gets auto-skipped
-    case "$MODEL" in
-        opus)
-            ARROW_PRESSES=4
-            ;;
-        haiku)
-            # Haiku not available in Plan mode, use Sonnet instead
-            echo "[$(date -Iseconds)] INFO | Haiku not available in Plan mode, switching to Sonnet" >> "$LOG_FILE"
-            MODEL="sonnet"
-            ARROW_PRESSES=5
-            ;;
-        sonnet)
-            ARROW_PRESSES=5
-            ;;
-    esac
-else
-    # Agent/Debug/Ask modes: full model list
-    case "$MODEL" in
-        opus)
-            ARROW_PRESSES=4
-            ;;
-        haiku)
-            ARROW_PRESSES=5
-            ;;
-        sonnet)
-            ARROW_PRESSES=6
-            ;;
-    esac
+# Search-based model selection: type model name into dropdown search bar
+SEARCH_TERM="$MODEL"
+if [ "$CURSOR_MODE" = "plan" ] && [ "$MODEL" = "haiku" ]; then
+    echo "[$(date -Iseconds)] INFO | Haiku not available in Plan mode, switching to Sonnet" >> "$LOG_FILE"
+    MODEL="sonnet"
+    SEARCH_TERM="sonnet"
 fi
 
 # Proxy via Terminal.app to get Accessibility permissions
@@ -126,14 +100,28 @@ RESULT_FILE="/tmp/.cursor-model-switch-$$-result.txt"
 
 cat > "$PROXY_SCRIPT" << PROXY_EOF
 #!/bin/bash
-osascript - "$MODEL" "$ARROW_PRESSES" <<'APPLESCRIPT_EOF'
+
+# Capture the window title to target this specific Cursor window
+WINDOW_TITLE="$WINDOW_TITLE"
+
+osascript - "$MODEL" "$SEARCH_TERM" "\$WINDOW_TITLE" <<'APPLESCRIPT_EOF'
 on run argv
     set targetModel to item 1 of argv
-    set arrowCount to item 2 of argv as integer
+    set searchTerm to item 2 of argv
+    set targetWindow to item 3 of argv
     
-    tell application "Cursor" to activate
+    -- Activate Cursor and bring the correct window to front
+    tell application "Cursor"
+        activate
+        if targetWindow is not "" then
+            try
+                set index of (first window whose name contains targetWindow) to 1
+            end try
+        end if
+    end tell
     delay 0.5
     
+    -- Verify Cursor is frontmost
     tell application "System Events"
         if frontmost of process "Cursor" is false then
             do shell script "echo ABORTED > $RESULT_FILE"
@@ -141,17 +129,47 @@ on run argv
         end if
     end tell
     
+    -- Open model dropdown with Cmd+/, then type to search using key codes
     tell application "System Events"
         tell process "Cursor"
             keystroke "/" using command down
-            delay 0.6
+            delay 0.8
             
-            repeat arrowCount times
-                key code 125
-                delay 0.15
+            -- Type model name using key codes (avoids keyboard layout issues)
+            -- h=4, a=0, i=34, k=40, u=32
+            -- s=1, o=31, n=45, e=14, t=17
+            -- p=35
+            repeat with c in (characters of searchTerm)
+                set ch to c as text
+                if ch is "a" then
+                    key code 0
+                else if ch is "e" then
+                    key code 14
+                else if ch is "h" then
+                    key code 4
+                else if ch is "i" then
+                    key code 34
+                else if ch is "k" then
+                    key code 40
+                else if ch is "n" then
+                    key code 45
+                else if ch is "o" then
+                    key code 31
+                else if ch is "p" then
+                    key code 35
+                else if ch is "s" then
+                    key code 1
+                else if ch is "t" then
+                    key code 17
+                else if ch is "u" then
+                    key code 32
+                end if
+                delay 0.05
             end repeat
             
-            delay 0.3
+            delay 0.8
+            
+            -- Enter to select the filtered result
             key code 36
         end tell
     end tell
@@ -162,10 +180,10 @@ APPLESCRIPT_EOF
 
 echo "EXIT:\$?" > "$RESULT_FILE"
 
-# Self-destruct: delete script and exit Terminal window (which auto-closes)
-sleep 0.3
+# Self-destruct: delete script and close the Terminal window (from working 8b36d92)
+sleep 0.2
 rm -f "$PROXY_SCRIPT"
-osascript -e 'tell application "Terminal" to do script "exit" in front window' 2>/dev/null
+osascript -e 'tell application "Terminal" to close front window' 2>/dev/null &
 PROXY_EOF
 
 chmod +x "$PROXY_SCRIPT"
@@ -192,3 +210,6 @@ done
 
 echo "[$(date -Iseconds)] TIMEOUT | Model: $MODEL" >> "$LOG_FILE"
 rm -f "$PROXY_SCRIPT" "$RESULT_FILE"
+
+# Close any orphaned Terminal window from the failed proxy script
+osascript -e 'tell application "Terminal" to close front window' 2>/dev/null &

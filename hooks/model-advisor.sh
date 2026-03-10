@@ -22,6 +22,58 @@ attachments = data.get("attachments", [])
 conversation_id = data.get("conversation_id", "")
 generation_id = data.get("generation_id", "")
 
+# #region agent log
+# Debug: capture hook input structure and full prompt for mode detection
+try:
+    debug_path = os.path.expanduser("~/.cursor/debug-f47d6c.log")
+    import time
+    debug_entry = {
+        "sessionId": "f47d6c",
+        "timestamp": int(time.time() * 1000),
+        "location": "model-advisor.sh:hook-input",
+        "message": "Hook input keys and mode detection",
+        "hypothesisId": "mode_detection",
+        "data": {
+            "all_keys": list(data.keys()),
+            "has_mode": "mode" in data,
+            "mode_value": data.get("mode", "NOT_PRESENT"),
+            "hook_event_name": data.get("hook_event_name", "NOT_PRESENT"),
+            "transcript_path": data.get("transcript_path", "NOT_PRESENT"),
+            "cursor_version": data.get("cursor_version", "NOT_PRESENT"),
+            "prompt_length": len(prompt),
+            "prompt_first_300": prompt[:300],
+            "prompt_contains_plan_mode": "plan mode" in prompt.lower() or "Plan mode" in prompt,
+            "model": model,
+            "workspace_roots": data.get("workspace_roots", []),
+        }
+    }
+    with open(debug_path, "a") as df:
+        df.write(json.dumps(debug_entry) + chr(10))
+except:
+    pass
+# #endregion agent log
+
+# Detect Cursor mode from hook input or prompt text
+cursor_mode = data.get("mode", "").lower()
+if not cursor_mode:
+    # Infer mode from prompt content (Cursor adds system reminders)
+    if "plan mode" in prompt.lower():
+        cursor_mode = "plan"
+    elif "debug mode" in prompt.lower():
+        cursor_mode = "debug"
+    elif "ask mode" in prompt.lower():
+        cursor_mode = "ask"
+    else:
+        cursor_mode = "agent"
+
+# Write mode to state file so auto-switch can read it
+try:
+    mode_path = os.path.join(os.path.expanduser("~/.cursor/hooks"), ".cursor-mode")
+    with open(mode_path, "w") as mf:
+        mf.write(cursor_mode)
+except:
+    pass
+
 is_override = prompt.lstrip().startswith("!")
 
 if is_override:
@@ -146,6 +198,9 @@ if not is_override:
     elif recommendation == "sonnet" and is_opus:
         block = True
         message = "Standard implementation work. Sonnet handles this at ~80% less cost with the same quality. Switch to Sonnet and re-send. (Prefix with ! to override.)"
+    elif recommendation == "sonnet" and is_haiku:
+        block = True
+        message = "This needs more than Haiku can handle. Switch to Sonnet for better results. (Prefix with ! to override.)"
     elif recommendation == "opus" and (is_sonnet or is_haiku):
         block = True
         message = "This looks like architecture, deep analysis, or multi-system work. Switch to Opus for better results, then re-send. (Prefix with ! to override.)"
@@ -199,10 +254,21 @@ try:
             if os.path.exists(auto_switch_script):
                 import subprocess
                 try:
+                    # Pass workspace info so auto-switch can target the correct Cursor window
+                    workspace_roots = data.get("workspace_roots", [])
+                    workspace_name = ""
+                    if workspace_roots:
+                        workspace_name = os.path.basename(workspace_roots[0])
+                    
+                    env = os.environ.copy()
+                    env["WINDOW_TITLE"] = workspace_name
+                    env["CONVERSATION_ID"] = conversation_id
+                    
                     subprocess.Popen([auto_switch_script, rec], 
                                    stdout=subprocess.DEVNULL, 
                                    stderr=subprocess.DEVNULL,
-                                   start_new_session=True)
+                                   start_new_session=True,
+                                   env=env)
                 except:
                     pass
 except:
