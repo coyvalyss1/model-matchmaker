@@ -10,9 +10,9 @@ When Model Matchmaker detects you're using the wrong model:
 
 1. Blocks the submission with a helpful message
 2. Automatically switches to the recommended model
-3. Opens the dropdown, types the model name, and presses Enter twice (once to select, once to confirm)
+3. Opens the dropdown, types the model name, presses Enter 3 times (select model, confirm, submit message)
 4. Terminal window flashes briefly (~1 second), then closes
-5. Your prompt is ready to send with the new model
+5. Your message is automatically sent with the correct model
 
 ## How It Works
 
@@ -62,8 +62,9 @@ Watch Cursor's model dropdown open, navigate to Haiku, and select it.
 
 - Terminal window opens briefly (necessary for macOS Accessibility permissions)
 - Window auto-closes ~1 second after switch completes
-- Auto-switch presses Enter twice: once to select the model, once to confirm selection
-- Your prompt is ready to send immediately after the switch
+- Auto-switch presses Enter 3 times: select model, confirm, submit message
+- Your message is automatically sent with the correct model
+- Entire flow takes ~3-4 seconds from block to submission
 - First time each model is switched may take up to 8 seconds (max timeout for result)
 
 ## Troubleshooting

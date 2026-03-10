@@ -174,7 +174,9 @@ on run argv
             
             delay 0.8
             
-            -- Enter to select the filtered result, then 1 more Enter to confirm
+            -- Enter to select model, Enter to confirm, Enter to submit message
+            key code 36
+            delay 0.3
             key code 36
             delay 0.3
             key code 36

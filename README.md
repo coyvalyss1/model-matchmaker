@@ -21,12 +21,12 @@ Enable automatic model switching (v2+):
 ~/.cursor/hooks/toggle-auto-switch.sh on
 ```
 
-When Model Matchmaker blocks a prompt, it now **automatically switches the model** for you via keyboard automation:
+When Model Matchmaker blocks a prompt, it now **automatically switches the model and submits your message** via keyboard automation:
 1. Opens the model dropdown (Cmd+/)
 2. Types the model name to search
-3. Presses Enter twice (select + confirm)
+3. Presses Enter 3 times (select model, confirm, submit message)
 4. Terminal window flashes briefly, then closes
-5. Your prompt is ready to send with the new model
+5. Your message is sent with the correct model (~3-4 seconds total)
 
 Check status:
 ```bash
@@ -104,7 +104,24 @@ Model Matchmaker v2+ can automatically switch models when it blocks a prompt:
 ~/.cursor/hooks/toggle-auto-switch.sh off
 ```
 
-When enabled, the model switches automatically (~1 second) instead of showing a block message. You press Enter to re-send with the new model.
+When enabled, the model switches and submits automatically (~3-4 seconds) instead of showing a block message.
+
+**Security:** Auto-switch uses input whitelisting, rate limiting, atomic locking, frontmost verification, and scoped keyboard shortcuts to ensure it can only type one of three model names into Cursor's dropdown—nothing more. See [SECURITY.md](SECURITY.md) for full details.
+
+**Customization:** The default whitelist includes `haiku`, `sonnet`, and `opus`. To use other models (GPT-4, Gemini, local models), edit `~/.cursor/hooks/auto-switch-model.sh` lines 36-42:
+
+```bash
+case "$MODEL" in
+    haiku|sonnet|opus|gpt-4|gemini)  # Add your models here
+        ;;
+    *)
+        echo "[$(date -Iseconds)] SECURITY: Invalid model rejected: $MODEL" >> "$LOG_FILE"
+        exit 1
+        ;;
+esac
+```
+
+Also update the classifier in `model-advisor.sh` to recommend your custom models.
 
 ## What Gets Routed Where
 
