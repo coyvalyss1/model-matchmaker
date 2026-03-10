@@ -70,29 +70,34 @@ Hook could: Auto-switch to Agent mode, then to Haiku
 
 ## Implementation Details
 
-### Minimal Addition
+### Required Fields
 
-Just the `mode` field would be sufficient:
+All three fields are **required** for hooks to work without workarounds:
+
 ```json
 {
-  "mode": "plan" | "agent" | "debug" | "ask"
+  "mode": "plan" | "agent" | "debug" | "ask",
+  "model_display_name": "Opus",
+  "available_models": ["opus", "sonnet", "haiku"]
 }
 ```
 
-Hooks can infer availability from mode (Plan=no Haiku, others=all models).
+**Why all three are needed:**
+1. `mode` - Context for what the user is trying to do (planning vs implementation)
+2. `model_display_name` - Human-readable name for user-facing messages
+3. `available_models` - Ground truth of what's selectable (can't be inferred from mode alone - availability may change independently)
 
-### Optional Enhancements
-
-- `model_display_name`: "Opus" instead of "claude-4.6-opus-high" (easier for user messages)
-- `available_models`: Explicit list of what's selectable in current mode
-- `mode_display_name`: "Plan Mode" for user-facing messages
+Without `available_models`, hooks must hardcode assumptions about what's available in each mode, which breaks when Cursor changes model availability.
 
 ## Why This Matters
 
 Model Matchmaker has proven demand:
-- Saves 50-70% on cloud API costs (retroactive analysis)
+- **120+ GitHub stars and 12 forks in 48 hours** (strong signal people want this)
+- **50-70% more prompts within the same budget** (users ship more, build better projects)
 - 3-5x speed improvement for simple tasks
-- Used by teams to enforce cost-aware model selection
+- Used by teams to enforce intelligent model routing
+
+**Cursor benefits:** Users who maximize their budget build more impressive projects, creating better word-of-mouth and showcases.
 
 But the current implementation requires:
 - 3 workaround scripts (`log-cursor-mode.sh`, `auto-switch-model.sh`, UI detection)
@@ -103,17 +108,31 @@ Adding `mode` to hooks would make these tools **just work** without hacks.
 
 ## Related Work
 
-- Model Matchmaker: https://github.com/coyvalyss1/model-matchmaker
+- Model Matchmaker: https://github.com/coyvalyss1/model-matchmaker (MIT license)
 - Auto-switch implementation: Uses keyboard automation via AppleScript
 - GitHub Issue #7: Auto-mode switching investigation
 
-## Alternatives Considered
+**Note:** Model Matchmaker is open source (MIT). Feel free to incorporate the classification logic directly into Cursor as a native feature if that's easier than building hooks support. The repo includes all the prompt classification and model routing logic.
 
-1. **UI scraping** (current workaround) — Fragile, requires Accessibility permissions, breaks on UI changes
-2. **Manual logging** (current workaround) — Requires user to remember to log mode changes
-3. **Mode detection heuristics** — Unreliable, can't distinguish modes with same model availability
+## Why Current Workarounds Don't Work
 
-None are as clean as first-class metadata in the hook payload.
+The core problem: **hooks can't do this work from within Cursor**. 
+
+Current implementation requires:
+1. **External terminal process** — Hooks must spawn a separate Terminal.app process to get Accessibility permissions for keyboard automation (Cursor hooks don't have these permissions)
+2. **Hardcoded UI positions** — No API to query model positions, so we hardcode arrow key counts (e.g., "Sonnet is 6 down from current"). Breaks when modes change model availability.
+3. **Manual mode tracking** — Users run `log-cursor-mode.sh` to tell the system what mode they're in, because hooks can't detect it
+
+**What we need:** Hooks that can work entirely within Cursor without external terminal processes or UI automation.
+
+Alternatives considered:
+- **UI scraping via AppleScript** (current) — Requires external Terminal.app, breaks on UI changes
+- **Heuristics** — Can't reliably distinguish Plan vs Agent mode
+- **Manual logging** — Users forget, breaks auto-switch flow
+
+None solve the fundamental issue: hooks need first-class access to mode and model metadata.
+
+**Note:** Claude Code's `UserPromptSubmit` hook has the same limitation — no mode field in their payload either. **You can gain immediate competitive differentiation by shipping this first.**
 
 ## Backward Compatibility
 

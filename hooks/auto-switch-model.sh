@@ -162,10 +162,10 @@ APPLESCRIPT_EOF
 
 echo "EXIT:\$?" > "$RESULT_FILE"
 
-# Self-destruct: delete this script and close the Terminal window
-sleep 0.2
+# Self-destruct: delete script and exit Terminal window (which auto-closes)
+sleep 0.3
 rm -f "$PROXY_SCRIPT"
-osascript -e 'tell application "Terminal" to close front window' 2>/dev/null &
+osascript -e 'tell application "Terminal" to do script "exit" in front window' 2>/dev/null
 PROXY_EOF
 
 chmod +x "$PROXY_SCRIPT"

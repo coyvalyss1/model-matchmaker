@@ -405,6 +405,11 @@ action = "OVERRIDE" if is_override else ("BLOCK" if block_prompt else "ALLOW")
 try:
     os.makedirs(HOOKS_DIR, exist_ok=True)
     snippet = clean_prompt[:40].replace(chr(10), " ").replace(chr(34), chr(39))
+    
+    # Check if auto-switch is enabled and would be triggered for this block
+    auto_switch_enabled = os.path.exists(os.path.join(log_dir, ".auto-switch-enabled"))
+    auto_switch_attempted = auto_switch_enabled and block
+    
     entry = {
         "event": "recommendation",
         "ts": datetime.now().isoformat(),

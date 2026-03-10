@@ -282,6 +282,17 @@ else:
             print(f"    Completed after override: {override_completed}")
             print(f"    Errored after override:   {override_errored}")
 
+    # Auto-switch impact tracking
+    auto_switched = [e for e in recs if e.get('auto_switch_attempted') == True]
+    manual_blocks = [e for e in blocks if not e.get('auto_switch_attempted')]
+    
+    if auto_switched:
+        print(f'\n  Auto-Switch Impact:')
+        print(f'    Blocks with auto-switch: {len(auto_switched)}')
+        print(f'    Manual blocks: {len(manual_blocks)}')
+        auto_switch_rate = len(auto_switched) / len(blocks) * 100 if blocks else 0
+        print(f'    Auto-switch rate: {auto_switch_rate:.1f}%')
+
     print()
     print("=" * 55)
     print(f"  Log file: {log_path}")
