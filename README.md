@@ -248,6 +248,101 @@ Prefix any prompt with `!` to bypass the advisor entirely:
 
 The override is logged (so you can track accuracy) but the prompt goes through immediately with no blocking.
 
+## Skills
+
+Model Matchmaker includes optional Cursor Agent skills that extend its functionality:
+
+### Context Monitor (`skills/context-monitor/SKILL.md`) 🆕
+
+**Problem:** Cursor's MAX mode (Claude Opus 3.5, 200K token context) triggers automatically when context exceeds 200K tokens. Due to the larger context window, MAX mode requests can consume significantly more credits than typical requests.
+
+**Solution:** Proactive context monitoring that warns before MAX mode triggers and helps you stay under the 200K limit.
+
+**How it works:**
+- 🟡 **100K tokens**: Notes internally, continues normally
+- 🟠 **150K tokens**: Warns and suggests wrapping up or starting fresh chat
+- 🔴 **180K tokens**: Recommends new chat immediately, offers handoff summary
+
+**Auto-triggers warnings when:**
+- Opening large files (>3,000 lines)
+- Multiple large files in context (>5 files over 1,000 lines)
+- Long conversations (>50 tool calls)
+- Reading agent transcripts or logs
+
+**Key feature: Handoff Summaries**
+
+When recommending a new chat, the skill auto-generates a concise handoff summary:
+- One-line task description
+- Progress bullets (what's done)
+- Next steps (numbered action items)
+- @file references (what files need work)
+- Critical context (1-2 sentences)
+
+**Example:**
+```markdown
+## Handoff Summary for New Chat
+
+**Task**: Fix chat component short-response fallback bug
+
+**Progress**:
+- Identified root cause: validation guard blocking saves
+- Removed guard from useChatManager.jsx
+- Added fallback examples to API helper
+
+**Next Steps**:
+1. Test save flow with empty data
+2. Verify data structure generation
+3. Deploy to production
+
+**Key Files**:
+- @src/hooks/useChatManager.jsx — Removed guard
+- @server/helpers/apiHelper.js — Added examples
+
+**Context**: Short-response fallback was a symptom, not root cause.
+```
+
+**Installation:**
+
+Copy the skill to your `.cursor/skills/` directory:
+```bash
+cp -r ~/model-matchmaker/skills/context-monitor ~/.cursor/skills/
+```
+
+Then add this to your `.cursorrules` (after any "Prior Session Context" section):
+
+```markdown
+## MAX Mode Prevention & Context Monitoring
+
+Monitor conversation context to avoid triggering MAX mode (200K token limit). See `.cursor/skills/context-monitor/SKILL.md` for full details.
+
+**Token Thresholds:**
+- 🟡 100K tokens: Note internally
+- 🟠 150K tokens: Warn user, suggest wrapping up
+- 🔴 180K tokens: Recommend new chat, offer handoff summary
+
+**High-cost files (auto-warn when opened):**
+- Any file >5,000 lines
+- Multiple files >1,000 lines each
+- Agent transcripts or logs
+
+**When recommending new chat**, generate handoff summary with task description, progress, next steps, and @file references.
+```
+
+**Expected Impact:**
+
+Based on typical usage patterns where large file operations push context to 150-180K:
+- Catch ~50% of MAX triggers before they happen
+- Reduce unnecessary context bloat
+- Significant credit savings for users who frequently work with large files
+
+**Works with Model Matchmaker:** Context Monitor helps you avoid MAX mode charges, while Model Matchmaker helps you avoid paying Opus prices for Haiku tasks. Together they optimize both context size and model selection.
+
+### Other Skills
+
+See the `skills/` directory for:
+- **optimize-classifier**: Auto-tune the classifier from your override patterns
+- **share-analytics**: Generate sanitized reports for community contribution
+
 ## Troubleshooting
 
 ### Auto-Switch Selects Wrong Model (Plan/Agent Mode)
