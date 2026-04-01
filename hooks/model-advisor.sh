@@ -3,6 +3,15 @@
 # Step-down: block + recommend Haiku/Sonnet when overpaying.
 # Step-up: block + recommend Opus when on Sonnet/Haiku for complex tasks.
 # Override: prefix prompt with "!" to bypass entirely.
+#
+# MODEL CAPABILITIES — Strategy B: Step-Up Routing (updated March 2026)
+# - Haiku 4.5:   Git ops, renames, formatting. Fast, cheap. 1-3s. $0.01-0.05/req
+# - Sonnet 4.5:  DEFAULT for 80% of work. Features, debugging, refactors. 3-6s. $0.08-0.30/req
+# - Sonnet 4.6:  Complex work, architecture, regressions, when 4.5 fails. 3-8s. $0.10-0.50/req
+# - Opus 4.0:    BLOCKED. Sonnet 4.6 matches quality at 90% less cost. $1-5/req ($35-209 MAX)
+#
+# Step-up policy: Haiku → Sonnet 4.5 (default) → Sonnet 4.6 (complex) → Opus (! override only)
+# Override policy: Use ! prefix only if Sonnet 4.6 has failed twice on the same task.
 
 INPUT=$(cat)
 
@@ -103,12 +112,26 @@ opus_keywords = [
     "high-stakes", "critical decision"
 ]
 
+# Sonnet 4.6-specific signals (step up from 4.5 default)
+sonnet_46_keywords = [
+    "regression", "was working before", "stopped working", "used to work",
+    "performance", "optimize", "security", "audit", "vulnerability",
+    "novel", "sophisticated", "intricate", "deep dive",
+    "multi-system", "cross-platform", "architecture decision",
+    "evaluate approach", "compare approaches", "tradeoff", "trade-off"
+]
+
 has_opus_signal = any(kw in prompt_lower for kw in opus_keywords)
+has_sonnet_46_signal = any(kw in prompt_lower for kw in sonnet_46_keywords)
 is_long_analytical = word_count > 100 and "?" in clean_prompt
 is_multi_paragraph = word_count > 200
 
+# Route complex tasks to appropriate Sonnet version (Opus blocked for cost control)
 if has_opus_signal or is_long_analytical or is_multi_paragraph:
-    recommendation = "opus"
+    if has_sonnet_46_signal:
+        recommendation = "sonnet-4.6"  # Complex work with specific 4.6 signals
+    else:
+        recommendation = "sonnet-4.5"  # Default complex work — 4.5 handles it
 else:
     # Short prompt patterns (2-10 words) - high confidence despite brevity
     short_haiku_prompts = [
@@ -149,7 +172,7 @@ else:
         if any(re.search(p, prompt_lower) for p in short_haiku_prompts):
             recommendation = "haiku"
         elif any(re.search(p, prompt_lower) for p in short_opus_prompts):
-            recommendation = "opus"
+            recommendation = "sonnet"  # Changed from "opus" - route to Sonnet 4.6
         elif any(re.search(p, prompt_lower) for p in short_sonnet_prompts):
             recommendation = "sonnet"
     
@@ -174,7 +197,16 @@ else:
             r"\bbuild\b", r"\bimplement\b", r"\bcreate\b", r"\bfix\b", r"\bdebug\b",
             r"\badd\s+feature\b", r"\bwrite\b", r"\bcomponent\b", r"\bservice\b",
             r"\bpage\b", r"\bdeploy\b", r"\btest\b", r"\bupdate\b", r"\brefactor\b",
-            r"\bstyle\b", r"\bcss\b", r"\broute\b", r"\bapi\b", r"\bfunction\b"
+            r"\bstyle\b", r"\bcss\b", r"\broute\b", r"\bapi\b", r"\bfunction\b",
+            # Tuned from March 2026 override analysis (146 false negatives)
+            r"let.s update the plan", r"update the plan", r"create the plan",
+            r"let.s build the plan", r"let.s implement", r"ok let.s build",
+            r"let.s also", r"yes,?\s+let.s", r"let.s discuss", r"let.s consider",
+            r"reality bot.*check", r"does this pass", r"smell test",
+            r"any holes", r"is this sound", r"let.s look at the patterns",
+            r"here are the console logs", r"let.s fix minor", r"let.s look at it",
+            r"update plan to", r"let.s do it\b", r"let.s build this",
+            r"let.s create a plan", r"let.s add to", r"let.s log and figure",
         ]
         is_sonnet_task = any(re.search(p, prompt_lower) for p in sonnet_patterns)
 
@@ -195,15 +227,19 @@ if not is_override:
             message = "This looks like a simple mechanical task (git, rename, format). Haiku handles these identically at ~90% less cost than Opus. Switch to Haiku and re-send. (Prefix with ! to override.)"
         else:
             message = "This looks like a simple mechanical task. Haiku handles these identically at ~80% less cost than Sonnet. Switch to Haiku and re-send. (Prefix with ! to override.)"
-    elif recommendation == "sonnet" and is_opus:
+    elif recommendation in ("sonnet", "sonnet-4.5") and is_opus:
         block = True
-        message = "Standard implementation work. Sonnet handles this at ~80% less cost with the same quality. Switch to Sonnet and re-send. (Prefix with ! to override.)"
-    elif recommendation == "sonnet" and is_haiku:
+        message = "Standard implementation work. Sonnet 4.5 handles this at ~95% less cost with the same quality. Switch to Sonnet 4.5 and re-send. (Prefix with ! to override.)"
+    elif recommendation == "sonnet-4.6" and is_opus:
         block = True
-        message = "This needs more than Haiku can handle. Switch to Sonnet for better results. (Prefix with ! to override.)"
-    elif recommendation == "opus" and (is_sonnet or is_haiku):
+        message = "Complex work detected. Sonnet 4.6 matches Opus quality at ~90% less cost. Switch to Sonnet 4.6 and re-send. (Prefix with ! to override only if Sonnet 4.6 has already failed on this task.)"
+    elif recommendation in ("sonnet", "sonnet-4.5", "sonnet-4.6") and is_haiku:
         block = True
-        message = "This looks like architecture, deep analysis, or multi-system work. Switch to Opus for better results, then re-send. (Prefix with ! to override.)"
+        message = "This needs more than Haiku can handle. Switch to Sonnet 4.5 for better results. (Prefix with ! to override.)"
+    elif is_opus:
+        # Block all remaining Opus usage — step-up routing handles complex work
+        block = True
+        message = "Opus is disabled for cost control ($1-5/call, $35-209 in MAX mode). Use Sonnet 4.5 for standard work or Sonnet 4.6 for complex tasks — both handle Opus-level work at 90-95% less cost. Switch to Sonnet and re-send. (Prefix with ! only if Sonnet 4.6 has failed twice on this exact task.)"
 
 rec = recommendation if recommendation else "uncertain"
 action = "OVERRIDE" if is_override else ("BLOCK" if block else "ALLOW")
@@ -218,6 +254,16 @@ try:
     auto_switch_enabled = os.path.exists(os.path.join(log_dir, ".auto-switch-enabled"))
     auto_switch_attempted = auto_switch_enabled and block
     
+    # Cost tier for analytics tracking
+    if rec == "haiku":
+        cost_tier = "low"
+    elif rec in ("sonnet-4.5", "sonnet") and "4.6" not in model:
+        cost_tier = "medium"
+    elif rec == "sonnet-4.6" or "4.6" in model:
+        cost_tier = "medium-high"
+    else:
+        cost_tier = "high"
+
     entry = {
         "event": "recommendation",
         "ts": datetime.now().isoformat(),
@@ -229,6 +275,7 @@ try:
         "word_count": word_count,
         "prompt_snippet": snippet,
         "auto_switch_attempted": auto_switch_attempted,
+        "cost_tier": cost_tier,
     }
     with open(log_path, "a") as f:
         f.write(json.dumps(entry) + "\n")

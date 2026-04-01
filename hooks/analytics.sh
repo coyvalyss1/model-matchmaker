@@ -181,6 +181,31 @@ else:
         auto_switch_rate = len(auto_switched) / len(blocks) * 100 if blocks else 0
         print(f'    Auto-switch rate: {auto_switch_rate:.1f}%')
 
+    # Cost tier analysis (Strategy B: Haiku → Sonnet 4.5 → Sonnet 4.6 → Opus blocked)
+    cost_tiers = Counter(e.get('cost_tier') for e in recs if e.get('cost_tier'))
+    if cost_tiers:
+        print(f'\n  Cost Tier Breakdown:')
+        low = cost_tiers.get('low', 0)
+        medium = cost_tiers.get('medium', 0)
+        medium_high = cost_tiers.get('medium-high', 0)
+        high = cost_tiers.get('high', 0)
+        print(f'    Low     (Haiku 4.5):   {low:>4} requests  (~${low * 0.03:.2f} est.)')
+        print(f'    Medium  (Sonnet 4.5):  {medium:>4} requests  (~${medium * 0.19:.2f} est.)')
+        print(f'    Med-Hi  (Sonnet 4.6):  {medium_high:>4} requests  (~${medium_high * 0.30:.2f} est.)')
+        print(f'    High    (Opus):        {high:>4} blocked')
+
+    # Savings from blocks
+    opus_blocks = [e for e in blocks if 'opus' in e.get('model', '').lower()]
+    sonnet_46_to_45 = [e for e in blocks if '4.6' in e.get('model', '') and e.get('recommendation') in ('sonnet', 'sonnet-4.5')]
+    if opus_blocks or sonnet_46_to_45:
+        print(f'\n  Estimated Savings from Blocks:')
+        if opus_blocks:
+            opus_savings = len(opus_blocks) * 3
+            print(f'    Opus → Sonnet blocks:       {len(opus_blocks):>3} x ~$3  = ~${opus_savings} saved')
+        if sonnet_46_to_45:
+            step_savings = len(sonnet_46_to_45) * 0.15
+            print(f'    Sonnet 4.6 → 4.5 step-downs: {len(sonnet_46_to_45):>3} x ~$0.15 = ~${step_savings:.2f} saved')
+
     print()
     print('=' * 50)
     print(f'  Log file: {log_path}')
