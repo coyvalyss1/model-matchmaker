@@ -543,6 +543,122 @@ echo '{"prompt":"test message","model":"claude-4-opus"}' | bash ~/.cursor/hooks/
 - Test standalone before deploying to users
 - Remember: exit code 2 = block, exit code 0 = success, other codes = fail-open (prompt proceeds)
 
+---
+
+## Claude Code Port
+
+Claude Code exposes model, effort, and extended thinking as programmable parameters — no AppleScript or UI automation needed. This port uses a pre-launch classifier and a silent hook.
+
+### How It Works
+
+```
+cc "redesign auth system"
+  → reads cc-config.json
+  → matches "architect" pattern → opus + effort:high + thinking:on
+  → writes alwaysThinkingEnabled to settings.json
+  → launches: ANTHROPIC_MODEL=opus CLAUDE_CODE_EFFORT_LEVEL=high claude
+  → on exit: restores alwaysThinkingEnabled
+```
+
+**Architecture principle:** The classifier is pure bash regex. Claude never decides its own model or effort level.
+
+### Quick Setup
+
+```bash
+# 1. Clone repo (if not already)
+git clone https://github.com/coyvalyss1/model-matchmaker.git
+
+# 2. Install scripts
+cp model-matchmaker/cc-config.json ~/.claude/hooks/
+cp model-matchmaker/hooks/cc-launch.sh ~/.claude/hooks/
+cp model-matchmaker/hooks/cc-effort-advisor.sh ~/.claude/hooks/
+cp model-matchmaker/hooks/mm-control.sh ~/.claude/hooks/
+chmod +x ~/.claude/hooks/cc-launch.sh ~/.claude/hooks/cc-effort-advisor.sh
+
+# 3. Add to ~/.claude/settings.json — inside the "hooks" block:
+#    "PreToolUse": [
+#      {
+#        "matcher": "Agent",
+#        "hooks": [{ "type": "command", "command": "bash ~/.claude/hooks/cc-effort-advisor.sh", "timeout": 3 }]
+#      }
+#    ]
+#    Also set: "availableModels": ["haiku", "sonnet", "opus"]
+
+# 4. Add to ~/.zshrc:
+alias cc='~/.claude/hooks/cc-launch.sh'
+source ~/.claude/hooks/mm-control.sh
+```
+
+### Usage
+
+```bash
+cc                               # default: sonnet + effort:low
+cc "find all TODO comments"      # haiku + effort:low
+cc "fix the login bug"           # sonnet + effort:medium
+cc "redesign the auth system"    # opus + effort:high + thinking:on
+```
+
+### Customizing Rules
+
+Edit `~/.claude/hooks/cc-config.json`:
+
+```json
+{
+  "version": 1,
+  "default": { "model": "sonnet", "effort": "low", "thinking": false },
+  "rules": [
+    {
+      "name": "deep-work",
+      "pattern": "architect|design system|audit|strategy",
+      "model": "opus",
+      "effort": "high",
+      "thinking": true
+    },
+    {
+      "name": "my-custom-rule",
+      "pattern": "database|sql|query|schema",
+      "model": "sonnet",
+      "effort": "high",
+      "thinking": false
+    }
+  ]
+}
+```
+
+Rules match top-to-bottom; first match wins. `pattern` is a case-insensitive extended regex (`grep -iE`). Valid models: `haiku`, `sonnet`, `opus`. Valid effort: `low`, `medium`, `high`.
+
+### Kill Switch
+
+```bash
+mm-off      # disable everything instantly
+mm-on       # re-enable
+mm-status   # show state, active rules, recent audit log
+```
+
+`mm-off` creates `~/.claude/hooks/.mm-kill` and saves a backup of the hook config. `mm-on` removes the kill switch and restores from backup.
+
+### Audit Log
+
+All launches log to `~/.claude/hooks/mm-audit.log` (NDJSON). Only the first 60 chars of prompts are retained. No network calls.
+
+```json
+{"ts":"...","event":"launch","rule":"deep-work","model":"opus","effort":"high","thinking":true,"hint":"redesign the auth system"}
+{"ts":"...","event":"subagent","rule":"quick-lookup","model":"haiku","effort":"low","hint":"find all files matching *.test.js"}
+```
+
+### Differences from the Cursor Version
+
+| | Cursor | Claude Code |
+|---|---|---|
+| Model enforcement | Hard block (UI) | Env var at launch (OS-level) |
+| Effort control | Not available | `CLAUDE_CODE_EFFORT_LEVEL` |
+| Thinking control | Not available | `alwaysThinkingEnabled` in settings.json |
+| Mid-session switch | AppleScript | Not supported (set at launch) |
+| Subagent routing | N/A | Silent PreToolUse hook |
+| Config format | Hardcoded patterns | `cc-config.json` (user-editable) |
+
+---
+
 ### Roadmap
 
 **Active Development:**

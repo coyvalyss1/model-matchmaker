@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "_comment": "Claude Code Model Matchmaker config. Rules match top-to-bottom; first match wins. Edit patterns, models, effort, and thinking freely. See README for full docs.",
+  "_overrides": "Prefix your hint with + for opus+medium or ++ for opus+high+thinking. No quotes needed. Example: cc +redesign auth system or cc ++prove this algorithm is correct",
+  "default": {
+    "model": "sonnet",
+    "effort": "low",
+    "thinking": false
+  },
+  "rules": [
+    {
+      "name": "deep-work",
+      "_comment": "Architecture, strategy, security — sonnet with high effort",
+      "pattern": "architect|redesign|design system|refactor entire|audit|strategy|multi.?service|security audit|deep.?dive|overhaul",
+      "model": "sonnet",
+      "effort": "high",
+      "thinking": false
+    },
+    {
+      "name": "implementation",
+      "_comment": "Standard feature work and debugging — balanced",
+      "pattern": "build|implement|debug|feature|create|migrate|fix|refactor|add|update|integrate",
+      "model": "sonnet",
+      "effort": "medium",
+      "thinking": false
+    },
+    {
+      "name": "quick-lookup",
+      "_comment": "Search, navigation, formatting — fast and cheap",
+      "pattern": "find|search|list|check|rename|format|commit|push|grep|show|explain|what is|summarize",
+      "model": "haiku",
+      "effort": "low",
+      "thinking": false
+    }
+  ]
+}
