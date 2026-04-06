@@ -138,7 +138,7 @@ on run argv
     tell application "System Events"
         tell process "Cursor"
             keystroke "/" using command down
-            delay 0.8
+            delay 1.2
             
             -- Type model name using key codes (avoids keyboard layout issues)
             -- h=4, a=0, i=34, k=40, u=32
@@ -172,13 +172,13 @@ on run argv
                 delay 0.05
             end repeat
             
-            delay 0.8
+            delay 1.0
             
             -- Enter to select model, Enter to confirm, Enter to submit message
             key code 36
-            delay 0.3
+            delay 0.4
             key code 36
-            delay 0.3
+            delay 0.4
             key code 36
         end tell
     end tell

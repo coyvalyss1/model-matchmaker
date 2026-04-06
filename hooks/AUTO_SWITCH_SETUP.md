@@ -74,6 +74,12 @@ Watch Cursor's model dropdown open, navigate to Haiku, and select it.
 - Verify Cursor is the frontmost window when you send
 - Verify auto-switch is enabled: `~/.cursor/hooks/toggle-auto-switch.sh status`
 
+**Typing appears in chat input instead of model selector:**
+- Fixed in April 2026 — increased delay from 0.8s to 1.2s before typing
+- If still happening, model selector may be slow to open on your system
+- Manual workaround: open model selector, wait 2 seconds, then use arrow keys
+- Report to maintainer with system specs if persistent
+
 **Terminal window not closing:**
 - Rare; osascript may have permissions issues
 - Manually close the Terminal window
