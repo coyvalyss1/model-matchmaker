@@ -174,9 +174,7 @@ on run argv
             
             delay 1.0
             
-            -- Enter to select model, Enter to confirm, Enter to submit message
-            key code 36
-            delay 0.4
+            -- Enter to select model, Enter to confirm (no auto-submit)
             key code 36
             delay 0.4
             key code 36
