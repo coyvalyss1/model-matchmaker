@@ -140,6 +140,10 @@ on run argv
             keystroke "/" using command down
             delay 1.2
             
+            -- Press Tab to focus the search field in the dropdown
+            key code 48
+            delay 0.3
+            
             -- Type model name using key codes (avoids keyboard layout issues)
             -- h=4, a=0, i=34, k=40, u=32
             -- s=1, o=31, n=45, e=14, t=17
