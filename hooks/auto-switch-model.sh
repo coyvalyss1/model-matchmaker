@@ -161,7 +161,7 @@ on run argv
                 else if ch is "u" then
                     key code 32
                 end if
-                delay 0.05
+                delay 0.15
             end repeat
             
             delay 1.5
