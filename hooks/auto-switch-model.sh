@@ -110,18 +110,7 @@ on run argv
     set searchTerm to item 2 of argv
     set targetWindow to item 3 of argv
     
-    -- Activate Cursor and bring the correct window to front
-    tell application "Cursor"
-        activate
-        if targetWindow is not "" then
-            try
-                set index of (first window whose name contains targetWindow) to 1
-            end try
-        end if
-    end tell
-    delay 0.5
-    
-    -- Verify Cursor is frontmost
+    -- Verify Cursor is frontmost (skip activate - it refocuses chat input)
     tell application "System Events"
         if frontmost of process "Cursor" is false then
             do shell script "echo ABORTED > $RESULT_FILE"
@@ -129,11 +118,12 @@ on run argv
         end if
     end tell
     
-    -- Open model dropdown with Cmd+/, then type to search using key codes
+    -- Open model dropdown with Cmd+/, then type to search
+    -- No activate call before this - that was stealing focus from the dropdown
     tell application "System Events"
         tell process "Cursor"
             keystroke "/" using command down
-            delay 0.8
+            delay 1.0
             
             -- Type model name using key codes (avoids keyboard layout issues)
             -- h=4, a=0, i=34, k=40, u=32
