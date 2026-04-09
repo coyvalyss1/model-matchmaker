@@ -133,7 +133,7 @@ on run argv
     tell application "System Events"
         tell process "Cursor"
             keystroke "/" using command down
-            delay 0.8
+            delay 1.0
             
             -- Type model name using key codes (avoids keyboard layout issues)
             -- h=4, a=0, i=34, k=40, u=32
@@ -167,7 +167,7 @@ on run argv
                 delay 0.05
             end repeat
             
-            delay 0.8
+            delay 1.2
             
             -- Enter to select the filtered result
             key code 36
