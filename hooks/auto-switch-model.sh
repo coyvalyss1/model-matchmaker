@@ -177,8 +177,10 @@ APPLESCRIPT_EOF
 
 echo "EXIT:\$?" > "$RESULT_FILE"
 
-# Self-destruct: delete script and close the Terminal window (from working 8b36d92)
-sleep 0.2
+# Self-destruct: delete script and close Terminal AFTER a delay
+# IMPORTANT: closing Terminal too early causes macOS to refocus the chat input
+# which steals focus from the model search field mid-typing
+sleep 5
 rm -f "$PROXY_SCRIPT"
 osascript -e 'tell application "Terminal" to close front window' 2>/dev/null &
 PROXY_EOF
