@@ -114,9 +114,8 @@ on run argv
     tell application "Cursor"
         activate
     end tell
-    -- Wait long enough for activate focus event to fully settle
-    -- before opening dropdown (otherwise activate steals focus back)
-    delay 1.0
+    -- Brief wait for Cursor to come to front
+    delay 0.5
     
     -- Verify Cursor is frontmost
     tell application "System Events"
@@ -130,7 +129,8 @@ on run argv
     tell application "System Events"
         tell process "Cursor"
             keystroke "/" using command down
-            delay 1.0
+            -- Longer delay to ensure dropdown is fully stable before typing
+            delay 1.5
             
             -- Type model name using key codes (avoids keyboard layout issues)
             -- h=4, a=0, i=34, k=40, u=32
