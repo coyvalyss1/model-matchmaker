@@ -128,45 +128,16 @@ on run argv
     -- Open model dropdown with Cmd+/, then type to search
     tell application "System Events"
         tell process "Cursor"
+            -- Open dropdown
             keystroke "/" using command down
-            -- Longer delay to ensure dropdown is fully stable before typing
             delay 1.5
             
-            -- Type model name using key codes (avoids keyboard layout issues)
-            -- h=4, a=0, i=34, k=40, u=32
-            -- s=1, o=31, n=45, e=14, t=17
-            -- p=35
-            repeat with c in (characters of searchTerm)
-                set ch to c as text
-                if ch is "a" then
-                    key code 0
-                else if ch is "e" then
-                    key code 14
-                else if ch is "h" then
-                    key code 4
-                else if ch is "i" then
-                    key code 34
-                else if ch is "k" then
-                    key code 40
-                else if ch is "n" then
-                    key code 45
-                else if ch is "o" then
-                    key code 31
-                else if ch is "p" then
-                    key code 35
-                else if ch is "s" then
-                    key code 1
-                else if ch is "t" then
-                    key code 17
-                else if ch is "u" then
-                    key code 32
-                end if
-                delay 0.15
-            end repeat
-            
+            -- Use keystroke (not key code) to type directly into focused field
+            -- keystroke respects the currently focused element
+            keystroke searchTerm
             delay 1.5
             
-            -- Enter to select model (dropdown closes, focus returns to chat)
+            -- Enter to select model
             key code 36
         end tell
     end tell
@@ -177,10 +148,9 @@ APPLESCRIPT_EOF
 
 echo "EXIT:\$?" > "$RESULT_FILE"
 
-# Self-destruct: delete script and close Terminal AFTER a delay
-# IMPORTANT: closing Terminal too early causes macOS to refocus the chat input
-# which steals focus from the model search field mid-typing
-sleep 5
+# Self-destruct: delete script and close Terminal window
+# AppleScript above takes ~4s total - wait until it's fully done
+sleep 0.2
 rm -f "$PROXY_SCRIPT"
 osascript -e 'tell application "Terminal" to close front window' 2>/dev/null &
 PROXY_EOF
