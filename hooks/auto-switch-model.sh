@@ -110,7 +110,15 @@ on run argv
     set searchTerm to item 2 of argv
     set targetWindow to item 3 of argv
     
-    -- Verify Cursor is frontmost (skip activate - it refocuses chat input)
+    -- Activate Cursor (needed because script runs via Terminal.app)
+    tell application "Cursor"
+        activate
+    end tell
+    -- Wait long enough for activate focus event to fully settle
+    -- before opening dropdown (otherwise activate steals focus back)
+    delay 1.0
+    
+    -- Verify Cursor is frontmost
     tell application "System Events"
         if frontmost of process "Cursor" is false then
             do shell script "echo ABORTED > $RESULT_FILE"
@@ -119,7 +127,6 @@ on run argv
     end tell
     
     -- Open model dropdown with Cmd+/, then type to search
-    -- No activate call before this - that was stealing focus from the dropdown
     tell application "System Events"
         tell process "Cursor"
             keystroke "/" using command down
