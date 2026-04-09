@@ -135,10 +135,6 @@ on run argv
             keystroke "/" using command down
             delay 0.8
             
-            -- Press Down arrow to ensure focus is in the dropdown
-            key code 125
-            delay 0.2
-            
             -- Type model name using key codes (avoids keyboard layout issues)
             -- h=4, a=0, i=34, k=40, u=32
             -- s=1, o=31, n=45, e=14, t=17
@@ -171,7 +167,7 @@ on run argv
                 delay 0.05
             end repeat
             
-            delay 1.2
+            delay 1.5
             
             -- Enter to select model (dropdown closes, focus returns to chat)
             key code 36
