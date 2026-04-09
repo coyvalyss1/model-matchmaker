@@ -42,24 +42,19 @@ case "$MODEL" in
         ;;
 esac
 
-# SECURITY: Atomic execution lock - prevent simultaneous executions
-# mkdir is atomic on Unix, unlike touch + file-exists check
-LOCK_DIR="$HOME/.cursor/hooks/.auto-switch-lock.d"
-if mkdir "$LOCK_DIR" 2>/dev/null; then
-    # Got the lock
-    trap "rm -rf $LOCK_DIR" EXIT
-else
-    # Lock exists - check age and bail
-    LOCK_AGE=$(( $(date +%s) - $(stat -f %m "$LOCK_DIR" 2>/dev/null || echo 0) ))
-    if [ $LOCK_AGE -gt 10 ]; then
-        rm -rf "$LOCK_DIR"
-        mkdir "$LOCK_DIR" 2>/dev/null || { echo "[$(date -Iseconds)] SECURITY: Lock contention" >> "$LOG_FILE"; exit 0; }
-        trap "rm -rf $LOCK_DIR" EXIT
-    else
+# SECURITY: Execution lock - prevent simultaneous executions
+if [ -f "$LOCK_FILE" ]; then
+    LOCK_AGE=$(( $(date +%s) - $(stat -f %m "$LOCK_FILE" 2>/dev/null || echo 0) ))
+    if [ $LOCK_AGE -lt 10 ]; then
         echo "[$(date -Iseconds)] SECURITY: Lock exists, switch in progress" >> "$LOG_FILE"
         exit 0
+    else
+        rm -f "$LOCK_FILE"
     fi
 fi
+
+touch "$LOCK_FILE"
+trap "rm -f $LOCK_FILE" EXIT
 
 # SECURITY: Rate limiting - prevent rapid-fire switching
 CURRENT_TIME=$(date +%s)
@@ -134,27 +129,47 @@ on run argv
         end if
     end tell
     
-    -- Open model dropdown and select by typing first letter
+    -- Open model dropdown with Cmd+/, then type to search using key codes
     tell application "System Events"
         tell process "Cursor"
             keystroke "/" using command down
-            delay 1.2
+            delay 0.8
             
-            -- Type first letter to jump to model (h/s/o)
-            -- h=4, s=1, o=31
-            if searchTerm is "haiku" then
-                key code 4
-            else if searchTerm is "sonnet" then
-                key code 1
-            else if searchTerm is "opus" then
-                key code 31
-            end if
+            -- Type model name using key codes (avoids keyboard layout issues)
+            -- h=4, a=0, i=34, k=40, u=32
+            -- s=1, o=31, n=45, e=14, t=17
+            -- p=35
+            repeat with c in (characters of searchTerm)
+                set ch to c as text
+                if ch is "a" then
+                    key code 0
+                else if ch is "e" then
+                    key code 14
+                else if ch is "h" then
+                    key code 4
+                else if ch is "i" then
+                    key code 34
+                else if ch is "k" then
+                    key code 40
+                else if ch is "n" then
+                    key code 45
+                else if ch is "o" then
+                    key code 31
+                else if ch is "p" then
+                    key code 35
+                else if ch is "s" then
+                    key code 1
+                else if ch is "t" then
+                    key code 17
+                else if ch is "u" then
+                    key code 32
+                end if
+                delay 0.05
+            end repeat
             
-            delay 0.4
+            delay 0.8
             
-            -- Enter to select model, Enter to confirm (no auto-submit)
-            key code 36
-            delay 0.4
+            -- Enter to select the filtered result
             key code 36
         end tell
     end tell
