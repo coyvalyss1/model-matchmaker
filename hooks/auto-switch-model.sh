@@ -134,49 +134,23 @@ on run argv
         end if
     end tell
     
-    -- Open model dropdown with Cmd+/, then type to search using key codes
+    -- Open model dropdown and select by typing first letter
     tell application "System Events"
         tell process "Cursor"
             keystroke "/" using command down
             delay 1.2
             
-            -- Press Tab to focus the search field in the dropdown
-            key code 48
-            delay 0.3
+            -- Type first letter to jump to model (h/s/o)
+            -- h=4, s=1, o=31
+            if searchTerm is "haiku" then
+                key code 4
+            else if searchTerm is "sonnet" then
+                key code 1
+            else if searchTerm is "opus" then
+                key code 31
+            end if
             
-            -- Type model name using key codes (avoids keyboard layout issues)
-            -- h=4, a=0, i=34, k=40, u=32
-            -- s=1, o=31, n=45, e=14, t=17
-            -- p=35
-            repeat with c in (characters of searchTerm)
-                set ch to c as text
-                if ch is "a" then
-                    key code 0
-                else if ch is "e" then
-                    key code 14
-                else if ch is "h" then
-                    key code 4
-                else if ch is "i" then
-                    key code 34
-                else if ch is "k" then
-                    key code 40
-                else if ch is "n" then
-                    key code 45
-                else if ch is "o" then
-                    key code 31
-                else if ch is "p" then
-                    key code 35
-                else if ch is "s" then
-                    key code 1
-                else if ch is "t" then
-                    key code 17
-                else if ch is "u" then
-                    key code 32
-                end if
-                delay 0.05
-            end repeat
-            
-            delay 1.0
+            delay 0.4
             
             -- Enter to select model, Enter to confirm (no auto-submit)
             key code 36
