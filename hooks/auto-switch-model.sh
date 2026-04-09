@@ -169,9 +169,7 @@ on run argv
             
             delay 1.2
             
-            -- Enter to select model, Enter to confirm (no auto-submit)
-            key code 36
-            delay 0.4
+            -- Enter to select model (dropdown closes, focus returns to chat)
             key code 36
         end tell
     end tell
