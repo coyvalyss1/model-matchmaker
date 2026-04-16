@@ -1,7 +1,7 @@
 {
   "name": "model-matchmaker",
   "description": "Local Cursor hook that classifies prompts and recommends the right Claude model (Haiku/Sonnet/Opus). Saves costs by routing simple tasks to fast models.",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "author": { 
     "name": "Coy Byron", 
     "company": "Valyss LLC",
